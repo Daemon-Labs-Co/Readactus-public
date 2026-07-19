@@ -1,0 +1,52 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/readactus-core",
+    "crates/readactus-detect",
+    "crates/readactus-transform",
+    "crates/readactus-license",
+    "crates/readactus-keygen",
+    "crates/readactus-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.86"
+authors = ["Daemon Labs"]
+license = "LicenseRef-Proprietary"
+
+[workspace.dependencies]
+# DAL — DDBCore, developed alongside in ../DDBCore
+ddbcore = { path = "../DDBCore/crates/ddbcore" }
+ddbcore-postgres = { path = "../DDBCore/crates/ddbcore-postgres" }
+ddbcore-mysql = { path = "../DDBCore/crates/ddbcore-mysql" }
+
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+async-trait = "0.1"
+futures = "0.3"
+thiserror = "1"
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+rust_decimal = "1"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# crypto for deterministic tokenization
+hmac = "0.12"
+sha2 = "0.10"
+zeroize = { version = "1", features = ["derive"] }
+rand = "0.8"
+
+# licensing
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+data-encoding = "2"
+dirs = "5"
+
+readactus-core = { path = "crates/readactus-core" }
+readactus-detect = { path = "crates/readactus-detect" }
+readactus-transform = { path = "crates/readactus-transform" }
+readactus-license = { path = "crates/readactus-license" }

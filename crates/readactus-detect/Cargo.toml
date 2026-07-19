@@ -1,0 +1,12 @@
+[package]
+name = "readactus-detect"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Sensitive-column detection for Readactus: rule-based today, LLM-assisted later"
+
+[dependencies]
+ddbcore.workspace = true
+serde.workspace = true

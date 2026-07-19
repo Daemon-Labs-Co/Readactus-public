@@ -1,0 +1,17 @@
+[package]
+name = "readactus-transform"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Deterministic, irreversible synthesis of realistic replacement values"
+
+[dependencies]
+ddbcore.workspace = true
+readactus-detect.workspace = true
+hmac.workspace = true
+sha2.workspace = true
+zeroize.workspace = true
+rand.workspace = true
+chrono.workspace = true

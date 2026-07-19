@@ -1,0 +1,22 @@
+[package]
+name = "readactus-keygen"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Daemon Labs internal registration-key issuer. NEVER shipped to users."
+
+[[bin]]
+name = "readactus-keygen"
+path = "src/main.rs"
+
+[dependencies]
+readactus-license.workspace = true
+ed25519-dalek.workspace = true
+data-encoding.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+rand.workspace = true
+anyhow.workspace = true
+clap = { version = "4", features = ["derive"] }

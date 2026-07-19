@@ -1,0 +1,25 @@
+[package]
+name = "readactus-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Readactus pipeline: reflect, detect, plan, and copy with deterministic transformation"
+
+[dependencies]
+ddbcore.workspace = true
+ddbcore-postgres.workspace = true
+ddbcore-mysql.workspace = true
+readactus-detect.workspace = true
+readactus-transform.workspace = true
+readactus-license.workspace = true
+futures.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+testcontainers-modules = { version = "0.13.0", features = ["postgres"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

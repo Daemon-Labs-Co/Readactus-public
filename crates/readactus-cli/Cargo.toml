@@ -1,0 +1,23 @@
+[package]
+name = "readactus-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Readactus command-line harness: scan and copy"
+
+[[bin]]
+name = "readactus"
+path = "src/main.rs"
+
+[dependencies]
+ddbcore.workspace = true
+readactus-core.workspace = true
+readactus-detect.workspace = true
+readactus-transform.workspace = true
+readactus-license.workspace = true
+anyhow.workspace = true
+clap = { version = "4", features = ["derive", "env"] }
+tokio.workspace = true
+tracing-subscriber.workspace = true
