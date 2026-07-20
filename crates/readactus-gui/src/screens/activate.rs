@@ -22,9 +22,10 @@ pub fn show(app: &mut ReadactusApp, ui: &mut egui::Ui) {
     ui.add_space(8.0);
 
     ui.vertical_centered(|ui| {
-        let input = egui::TextEdit::singleline(key_input)
+        let input = egui::TextEdit::multiline(key_input)
             .hint_text("RDX1-...")
-            .desired_width(400.0);
+            .desired_width(500.0)
+            .desired_rows(5);
         ui.add(input);
     });
     ui.add_space(12.0);
