@@ -55,7 +55,7 @@ pub fn show(app: &mut ReadactusApp, ui: &mut egui::Ui) {
     ui.add_space(16.0);
 
     if let Some(err) = error {
-        ui.colored_label(egui::Color32::from_rgb(220, 50, 50), err.as_str());
+        ui.colored_label(ui.visuals().error_fg_color, err.as_str());
         ui.add_space(8.0);
     }
 

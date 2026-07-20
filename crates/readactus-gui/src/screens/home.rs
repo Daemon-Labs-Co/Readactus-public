@@ -54,6 +54,6 @@ pub fn show(app: &mut ReadactusApp, ui: &mut egui::Ui) {
         ui.add_space(40.0);
         ui.separator();
         ui.add_space(8.0);
-        ui.colored_label(egui::Color32::from_rgb(100, 180, 100), "Registered");
+        ui.colored_label(ui.visuals().warn_fg_color, "Registered");
     });
 }

@@ -32,7 +32,7 @@ pub fn show(app: &mut ReadactusApp, ui: &mut egui::Ui) {
 
     if let Some(err) = error {
         ui.vertical_centered(|ui| {
-            ui.colored_label(egui::Color32::from_rgb(220, 50, 50), err.as_str());
+            ui.colored_label(ui.visuals().error_fg_color, err.as_str());
         });
         ui.add_space(8.0);
     }

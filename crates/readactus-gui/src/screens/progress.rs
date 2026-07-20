@@ -37,7 +37,7 @@ pub fn show(app: &mut ReadactusApp, ui: &mut egui::Ui) {
 
     if let Some(err) = &failed {
         ui.add_space(16.0);
-        ui.colored_label(egui::Color32::from_rgb(220, 50, 50), format!("Error: {err}"));
+        ui.colored_label(ui.visuals().error_fg_color, format!("Error: {err}"));
         ui.add_space(12.0);
         if ui.button("Back to home").clicked() {
             app.pipeline = None;
