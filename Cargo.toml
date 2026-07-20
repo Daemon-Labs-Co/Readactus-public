@@ -7,6 +7,7 @@ members = [
     "crates/readactus-license",
     "crates/readactus-keygen",
     "crates/readactus-cli",
+    "crates/readactus-gui",
 ]
 
 [workspace.package]
@@ -45,6 +46,10 @@ rand = "0.8"
 ed25519-dalek = { version = "2", features = ["rand_core"] }
 data-encoding = "2"
 dirs = "5"
+
+# GUI
+eframe = "0.35"
+egui_extras = { version = "0.35", features = ["all_loaders"] }
 
 readactus-core = { path = "crates/readactus-core" }
 readactus-detect = { path = "crates/readactus-detect" }

@@ -1,0 +1,26 @@
+[package]
+name = "readactus-gui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "readactus-gui"
+path = "src/main.rs"
+
+[dependencies]
+eframe = { workspace = true }
+egui_extras = { workspace = true }
+
+readactus-core = { workspace = true }
+readactus-detect = { workspace = true }
+readactus-transform = { workspace = true }
+readactus-license = { workspace = true }
+ddbcore = { workspace = true }
+
+tokio = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
