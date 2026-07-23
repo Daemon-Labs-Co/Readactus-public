@@ -1,6 +1,7 @@
 use eframe::egui;
 
-use crate::app::{DbForm, ReadactusApp, Screen};
+use crate::app::{ConnTarget, DbForm, ReadactusApp, Screen};
+use crate::theme;
 use readactus_core::ColumnAction;
 use readactus_detect::{kind_label, PiiKind};
 
@@ -21,27 +22,30 @@ pub fn show(app: &mut ReadactusApp, ui: &mut egui::Ui) {
         }
     };
 
-    ui.vertical_centered(|ui| {
-        ui.add_space(12.0);
-        ui.heading("Review Transformation Plan");
-        ui.add_space(4.0);
-        let total_cols: usize = pipeline.plan.tables.iter().map(|t| t.columns.len()).sum();
-        let transformed: usize = pipeline
-            .plan
-            .tables
-            .iter()
-            .flat_map(|t| &t.columns)
-            .filter(|c| matches!(c.action, ColumnAction::Tokenize(_)))
-            .count();
-        ui.label(format!(
-            "{} table(s), {} column(s) total, {} to be transformed",
-            pipeline.plan.tables.len(),
-            total_cols,
-            transformed,
-        ));
+    let total_cols: usize = pipeline.plan.tables.iter().map(|t| t.columns.len()).sum();
+    let transformed: usize = pipeline
+        .plan
+        .tables
+        .iter()
+        .flat_map(|t| &t.columns)
+        .filter(|c| matches!(c.action, ColumnAction::Tokenize(_)))
+        .count();
+
+    theme::hero(ui, |ui| {
+        theme::title(ui, "Review Transformation Plan");
+        theme::caption(
+            ui,
+            &format!(
+                "{} table(s) · {} column(s) · {} to transform · {} PII finding(s)",
+                pipeline.plan.tables.len(),
+                total_cols,
+                transformed,
+                pipeline.findings.len(),
+            ),
+        );
     });
 
-    ui.add_space(8.0);
+    ui.add_space(12.0);
 
     ui.horizontal(|ui| {
         ui.label("Confidence threshold:");
@@ -114,7 +118,7 @@ pub fn show(app: &mut ReadactusApp, ui: &mut egui::Ui) {
     ui.add_space(8.0);
 
     ui.horizontal(|ui| {
-        if ui.button("Back").clicked() {
+        if theme::secondary_button(ui, "Back", true).clicked() {
             app.screen = Screen::SourceConnection {
                 form: app.source_form.clone(),
                 error: None,
@@ -122,19 +126,21 @@ pub fn show(app: &mut ReadactusApp, ui: &mut egui::Ui) {
             };
         }
 
-        if ui.button("Continue to target").clicked() {
-            let default_port = match app.source_engine {
-                readactus_core::Engine::Postgres => "5432",
-                readactus_core::Engine::MySql => "3306",
-            };
-            app.screen = Screen::TargetConnection {
-                form: DbForm {
-                    engine: app.source_engine,
-                    port: default_port.into(),
-                    ..DbForm::default()
-                },
-                error: None,
-                connecting: false,
+        if theme::primary_button(ui, "Continue to target").clicked() {
+            // Same gate as the source step: pick from the shared pool when it
+            // has entries, otherwise go straight to a blank target form.
+            app.screen = if app.profiles.is_empty() {
+                Screen::TargetConnection {
+                    form: DbForm::for_engine(app.source_engine),
+                    error: None,
+                    connecting: false,
+                }
+            } else {
+                Screen::Profiles {
+                    target: ConnTarget::Target,
+                    editor: None,
+                    status: None,
+                }
             };
         }
     });

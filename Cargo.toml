@@ -47,6 +47,9 @@ ed25519-dalek = { version = "2", features = ["rand_core"] }
 data-encoding = "2"
 dirs = "5"
 
+# OS secret store for connection-profile passwords
+keyring = { version = "3", features = ["apple-native", "windows-native"] }
+
 # GUI
 eframe = "0.35"
 egui_extras = { version = "0.35", features = ["all_loaders"] }

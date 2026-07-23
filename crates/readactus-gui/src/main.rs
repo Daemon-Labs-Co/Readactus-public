@@ -1,5 +1,7 @@
 mod app;
+mod profiles;
 mod screens;
+mod theme;
 
 use eframe::NativeOptions;
 use eframe::egui;

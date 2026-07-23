@@ -24,3 +24,14 @@ tokio = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
+
+# Connection profiles: JSON persistence + OS keychain for passwords.
+serde = { workspace = true }
+serde_json = { workspace = true }
+dirs = { workspace = true }
+uuid = { workspace = true }
+keyring = { workspace = true }
+
+# On Linux the OS secret store is reached over D-Bus (Secret Service).
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { workspace = true, features = ["sync-secret-service", "crypto-rust"] }

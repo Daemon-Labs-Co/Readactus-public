@@ -7,6 +7,7 @@ use readactus_core::{CopyReport, Engine, Plan};
 use readactus_detect::Finding;
 use readactus_license::{current_entitlements, Entitlements, ISSUER_PUBLIC_KEY_B32};
 
+use crate::profiles::ConnectionProfile;
 use crate::screens;
 
 #[derive(Debug, Clone)]
@@ -35,6 +36,19 @@ impl Default for DbForm {
 }
 
 impl DbForm {
+    /// A blank form for `engine`, seeded with that engine's default port.
+    pub fn for_engine(engine: Engine) -> Self {
+        let port = match engine {
+            Engine::Postgres => "5432",
+            Engine::MySql => "3306",
+        };
+        Self {
+            engine,
+            port: port.into(),
+            ..Self::default()
+        }
+    }
+
     pub fn to_config(&self) -> Result<ConnectionConfig, String> {
         let port: u16 = self.port.parse().map_err(|_| "invalid port number")?;
         Ok(ConnectionConfig {
@@ -55,9 +69,37 @@ impl DbForm {
 
 #[derive(Debug, Clone)]
 pub enum CopyProgress {
+    // Reserved for live per-table progress. `run_copy` currently reports only
+    // terminal Done/Failed, so nothing constructs this yet; the progress screen
+    // already renders it for when copy gains streaming updates.
+    #[allow(dead_code)]
     Table { schema: String, table: String, rows: u64 },
     Done(CopyReport),
     Failed(String),
+}
+
+/// Which step of the pipeline a profile picker is feeding. Profiles are a
+/// single shared pool (like DataGrip's "My Databases"); this only decides where
+/// the chosen connection is used and which screen we return to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConnTarget {
+    Source,
+    Target,
+}
+
+/// Transient state for the add/edit form on the "My Databases" screen.
+pub struct ProfileEditor {
+    /// User-facing profile name.
+    pub name: String,
+    /// The connection fields being edited.
+    pub form: DbForm,
+    /// `Some(id)` when editing an existing profile in place; `None` for a new
+    /// one.
+    pub editing_id: Option<String>,
+    /// Validation / test-connection feedback shown inside the editor.
+    pub error: Option<String>,
+    /// Set while a "Test connection" is running.
+    pub testing: bool,
 }
 
 pub enum Screen {
@@ -66,6 +108,13 @@ pub enum Screen {
         error: Option<String>,
     },
     Home,
+    /// The "My Databases" manager: pick a saved profile for `target`, or
+    /// add/edit/delete/test profiles. `editor` is `Some` while adding/editing.
+    Profiles {
+        target: ConnTarget,
+        editor: Option<ProfileEditor>,
+        status: Option<String>,
+    },
     SourceConnection {
         form: DbForm,
         error: Option<String>,
@@ -100,11 +149,18 @@ pub struct ReadactusApp {
     pub source_form: DbForm,
     pub source_engine: Engine,
     pub pipeline: Option<PipelineState>,
+    /// The shared pool of saved connection profiles ("My Databases"), loaded
+    /// once at startup and kept in sync with `connections.json` on every edit.
+    pub profiles: Vec<ConnectionProfile>,
     pub tokio_rt: Arc<tokio::runtime::Runtime>,
 }
 
 impl ReadactusApp {
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        // Install the Daemon Labs brand theme: fonts, type scale, spacing and
+        // hand-tuned light/dark palettes. This also follows the OS appearance.
+        crate::theme::install(&cc.egui_ctx);
+
         let entitlements = match current_entitlements(ISSUER_PUBLIC_KEY_B32, None) {
             Ok(ent) if ent.registered => ent,
             Ok(_) => Entitlements::free(),
@@ -136,7 +192,16 @@ impl ReadactusApp {
             source_form: DbForm::default(),
             source_engine: Engine::Postgres,
             pipeline: None,
+            profiles: crate::profiles::load_profiles(),
             tokio_rt,
+        }
+    }
+
+    /// Persist the current profile pool, logging (not surfacing) any I/O error
+    /// — a failed write shouldn't block the user mid-flow.
+    pub fn save_profiles(&self) {
+        if let Err(e) = crate::profiles::save_profiles(&self.profiles) {
+            tracing::warn!("failed to save connection profiles: {e}");
         }
     }
 
@@ -150,14 +215,22 @@ impl ReadactusApp {
 
 impl eframe::App for ReadactusApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        match &self.screen {
-            Screen::Activate { .. } => screens::activate::show(self, ui),
-            Screen::Home => screens::home::show(self, ui),
-            Screen::SourceConnection { .. } => screens::source::show(self, ui),
-            Screen::PlanReview { .. } => screens::review::show(self, ui),
-            Screen::TargetConnection { .. } => screens::target::show(self, ui),
-            Screen::CopyProgress { .. } => screens::progress::show(self, ui),
-            Screen::Results { .. } => screens::result::show(self, ui),
-        }
+        // The `App::ui` hook hands us a Ui with no margin or background, so
+        // the only thing painting behind us would be eframe's fixed dark
+        // `clear_color`. Wrap everything in a CentralPanel so the window is
+        // filled with the theme's own background (light on the light OS
+        // appearance, dark on the dark one) and text keeps proper contrast.
+        egui::CentralPanel::default().show(ui, |ui| {
+            crate::theme::page(ui, |ui| match &self.screen {
+                Screen::Activate { .. } => screens::activate::show(self, ui),
+                Screen::Home => screens::home::show(self, ui),
+                Screen::Profiles { .. } => screens::profiles::show(self, ui),
+                Screen::SourceConnection { .. } => screens::source::show(self, ui),
+                Screen::PlanReview { .. } => screens::review::show(self, ui),
+                Screen::TargetConnection { .. } => screens::target::show(self, ui),
+                Screen::CopyProgress { .. } => screens::progress::show(self, ui),
+                Screen::Results { .. } => screens::result::show(self, ui),
+            });
+        });
     }
 }

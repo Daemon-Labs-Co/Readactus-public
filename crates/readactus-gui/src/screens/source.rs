@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use eframe::egui;
 
-use crate::app::{PipelineState, ReadactusApp, Screen};
+use crate::app::{ConnTarget, PipelineState, ProfileEditor, ReadactusApp, Screen};
+use crate::screens::db_form_fields;
+use crate::theme;
 use readactus_core::{build_plan, connect_source};
 
 pub fn show(app: &mut ReadactusApp, ui: &mut egui::Ui) {
@@ -10,46 +12,17 @@ pub fn show(app: &mut ReadactusApp, ui: &mut egui::Ui) {
         return;
     };
 
-    ui.vertical_centered(|ui| {
-        ui.add_space(20.0);
-        ui.heading("Source Connection");
-        ui.add_space(20.0);
+    theme::hero(ui, |ui| {
+        theme::title(ui, "Source Connection");
+        theme::caption(ui, "The database to read and scan for PII");
+    });
+    ui.add_space(20.0);
+
+    theme::card(ui, |ui| {
+        db_form_fields(ui, "source_form", form);
     });
 
-    egui::Grid::new("source_form")
-        .num_columns(2)
-        .spacing([12.0, 8.0])
-        .show(ui, |ui| {
-            ui.label("Host:");
-            ui.add(egui::TextEdit::singleline(&mut form.host).desired_width(300.0));
-            ui.end_row();
-
-            ui.label("Port:");
-            ui.add(egui::TextEdit::singleline(&mut form.port).desired_width(80.0));
-            ui.end_row();
-
-            ui.label("Database:");
-            ui.add(egui::TextEdit::singleline(&mut form.database).desired_width(300.0));
-            ui.end_row();
-
-            ui.label("Username:");
-            ui.add(egui::TextEdit::singleline(&mut form.username).desired_width(300.0));
-            ui.end_row();
-
-            ui.label("Password:");
-            ui.add(
-                egui::TextEdit::singleline(&mut form.password)
-                    .password(true)
-                    .desired_width(300.0),
-            );
-            ui.end_row();
-
-            ui.label("TLS:");
-            ui.checkbox(&mut form.use_tls, "Encrypt connection");
-            ui.end_row();
-        });
-
-    ui.add_space(16.0);
+    ui.add_space(12.0);
 
     if let Some(err) = error {
         ui.colored_label(ui.visuals().error_fg_color, err.as_str());
@@ -64,21 +37,46 @@ pub fn show(app: &mut ReadactusApp, ui: &mut egui::Ui) {
 
     let mut go_back = false;
     let mut do_scan = false;
+    let mut save_as_profile = false;
 
     ui.horizontal(|ui| {
-        if ui.button("Back").clicked() {
+        if theme::secondary_button(ui, "Back", true).clicked() {
             go_back = true;
         }
-        if ui.add_enabled(can_connect, egui::Button::new("Scan")).clicked() {
+        if theme::secondary_button(ui, "Save as profile", !is_connecting).clicked() {
+            save_as_profile = true;
+        }
+        if theme::primary_button_enabled(ui, "Scan", can_connect).clicked() {
             do_scan = true;
         }
         if is_connecting {
+            ui.add_space(4.0);
             ui.spinner();
         }
     });
 
     if go_back {
         app.screen = Screen::Home;
+        return;
+    }
+
+    if save_as_profile {
+        // Hand the current details to the "My Databases" editor to name and
+        // save; returning to it lands on the list where they can pick it.
+        if let Screen::SourceConnection { form, .. } = &app.screen {
+            let form = form.clone();
+            app.screen = Screen::Profiles {
+                target: ConnTarget::Source,
+                editor: Some(ProfileEditor {
+                    name: String::new(),
+                    form,
+                    editing_id: None,
+                    error: None,
+                    testing: false,
+                }),
+                status: None,
+            };
+        }
         return;
     }
 
